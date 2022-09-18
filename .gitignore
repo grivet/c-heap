@@ -1,0 +1,7 @@
+*.d
+*.o
+/unit
+/bench
+test/**.d
+test/**.o
+config.mk
