@@ -8,11 +8,32 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-typedef int (*bheap_cmp)(const void *a, const void *b);
+struct bheap_node {
+    void *data;
+    uint32_t priority;
+};
+
+static inline int
+bheap_min_cmp(struct bheap_node *a, struct bheap_node *b)
+{
+    uint32_t pa = a->priority, pb = b->priority;
+
+    return (pa < pb) ? -1 :
+           (pa > pb) ? 1  :
+           0;
+}
+
+static inline int
+bheap_max_cmp(struct bheap_node *a, struct bheap_node *b)
+{
+    return -bheap_min_cmp(a, b);
+}
+
+typedef int (*bheap_cmp)(struct bheap_node *a, struct bheap_node *b);
 
 struct bheap {
     bheap_cmp cmp;
-    void **entries;
+    struct bheap_node *entries;
     size_t capacity;
     size_t n;
 };
@@ -23,9 +44,9 @@ struct bheap {
 }
 
 static inline void
-bheap_ptr_swap(void **a, void **b)
+bheap_ptr_swap(struct bheap_node *a, struct bheap_node *b)
 {
-    void *tmp = *a;
+    struct bheap_node tmp = *a;
     *a = *b;
     *b = tmp;
 }
@@ -33,13 +54,13 @@ bheap_ptr_swap(void **a, void **b)
 static inline bool
 bheap_cmp_entries(struct bheap *h, size_t a, size_t b)
 {
-    return (h->cmp(h->entries[a], h->entries[b]) < 0);
+    return (h->cmp(&h->entries[a], &h->entries[b]) < 0);
 }
 
 static inline void
 bheap_up(struct bheap *h, size_t i)
 {
-    void **e = h->entries;
+    struct bheap_node *e = h->entries;
     size_t parent;
 
     while ((parent = (i - 1) / 2), i > 0 && bheap_cmp_entries(h, i, parent)) {
@@ -51,7 +72,7 @@ bheap_up(struct bheap *h, size_t i)
 static inline void
 bheap_down(struct bheap *h, size_t i, size_t size)
 {
-    void **e = h->entries;
+    struct bheap_node *e = h->entries;
     size_t next;
 
     while ((next = (2 * i + 1)), next < size) {
@@ -71,8 +92,9 @@ bheap_realloc(struct bheap *h, size_t n)
     void *p;
 
     if (n > c) {
-        c = c == 0 ? 1 : 2 * c;
-        p = realloc(h->entries, c * sizeof(void *));
+        size_t delta = (1.75 * c) - c;
+        c += delta ? delta : 1;
+        p = realloc(h->entries, c * sizeof(h->entries[0]));
         if (p == NULL) {
             return false;
         }
@@ -97,7 +119,7 @@ bheap_is_empty(struct bheap *h)
 static inline void *
 bheap_peek(struct bheap *h)
 {
-    return bheap_is_empty(h) ? NULL : h->entries[0];
+    return bheap_is_empty(h) ? NULL : h->entries[0].data;
 }
 
 static inline void *
@@ -123,13 +145,14 @@ bheap_pop(struct bheap *h)
 }
 
 static inline void
-bheap_insert(struct bheap *h, void *entry)
+bheap_insert(struct bheap *h, void *entry, uint32_t priority)
 {
     if (!bheap_realloc(h, h->n + 1)) {
         return;
     }
 
-    h->entries[h->n] = entry;
+    h->entries[h->n].data = entry;
+    h->entries[h->n].priority = priority;
     bheap_up(h, h->n);
     h->n += 1;
 }
