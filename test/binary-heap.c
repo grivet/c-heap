@@ -42,6 +42,18 @@ binary_heap_pop(void *aux)
     return bheap_pop(aux);
 }
 
+static void
+binary_heap_update(void *heap, struct element *e, long long int v)
+{
+    struct bheap_node k = {
+        .data = e,
+        .priority.lli = v,
+    };
+
+    e->expiration = v;
+    bheap_update_key(heap, k);
+}
+
 static struct bheap heap;
 
 struct heap_interface min_binary_heap = {
@@ -53,7 +65,7 @@ struct heap_interface min_binary_heap = {
     .insert = binary_heap_insert,
     .peek = binary_heap_peek,
     .pop = binary_heap_pop,
-    .update = NULL,
+    .update = binary_heap_update,
 };
 
 struct heap_interface max_binary_heap = {
@@ -65,5 +77,5 @@ struct heap_interface max_binary_heap = {
     .insert = binary_heap_insert,
     .peek = binary_heap_peek,
     .pop = binary_heap_pop,
-    .update = NULL,
+    .update = binary_heap_update,
 };

@@ -14,6 +14,7 @@ struct bheap_node {
         uint32_t u32;
         long long int lli;
     } priority;
+    bool invalid;
 };
 
 static inline int
@@ -137,9 +138,32 @@ bheap_is_empty(struct bheap *h)
     return h->n == 0;
 }
 
+static inline void
+bheap_pop_(struct bheap *h)
+{
+    if (bheap_is_empty(h)) {
+        return;
+    }
+
+    h->n -= 1;
+    bheap_swap(h, 0, h->n);
+    bheap_down(h, 0, h->n);
+
+    if (h->n == 0) {
+        free(h->entries);
+        h->entries = NULL;
+        h->capacity = 0;
+    }
+}
+
 static inline void *
 bheap_peek(struct bheap *h)
 {
+    while (!bheap_is_empty(h) &&
+           h->entries[0].invalid) {
+        bheap_pop_(h);
+    }
+
     return bheap_is_empty(h) ? NULL : h->entries[0].data;
 }
 
@@ -152,16 +176,7 @@ bheap_pop(struct bheap *h)
         return NULL;
     }
 
-    h->n -= 1;
-    bheap_swap(h, 0, h->n);
-    bheap_down(h, 0, h->n);
-
-    if (h->n == 0) {
-        free(h->entries);
-        h->entries = NULL;
-        h->capacity = 0;
-    }
-
+    bheap_pop_(h);
     return top;
 }
 
@@ -172,9 +187,24 @@ bheap_insert(struct bheap *h, struct bheap_node n)
         return;
     }
 
+    n.invalid = false;
     h->entries[h->n] = n;
     bheap_up(h, h->n);
     h->n += 1;
+}
+
+static inline void
+bheap_update_key(struct bheap *h, struct bheap_node new_key)
+{
+    void *data = new_key.data;
+
+    for (size_t i = 0; i < h->n; i++) {
+        if (h->entries[i].data == data) {
+            h->entries[i].invalid = true;
+            break;
+        }
+    }
+    bheap_insert(h, new_key);
 }
 
 #endif /* _BINARY_HEAP_H_ */
