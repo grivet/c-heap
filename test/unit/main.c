@@ -141,101 +141,6 @@ static char *mode2txt[] = {
     [N_MODES] = "<invalid>",
 };
 
-#if 0
-static void
-print_heap_size(struct pheap *h, struct mov_avg_cma *cma)
-{
-    printf("heap(%u): [d:%u, w:%u] avg-n-cmp:%.2lf(%.2lf)\n",
-            pheap_length(h), pheap_depth(h), pheap_width(h),
-            mov_avg_cma(cma), mov_avg_cma_std_dev(cma));
-}
-
-#define N_ELEMS 100
-
-static void
-test_pheap_modify_key(enum init_mode mode)
-{
-    struct pheap heap = PHEAP_INITIALIZER(element_node_cmp_inc);
-    struct element elements[N_ELEMS];
-    struct mov_avg_cma cma;
-    uint32_t prios[N_ELEMS];
-    struct pheap_node *top;
-    size_t i;
-
-    mov_avg_cma_init(&cma);
-    elements_init(elements, N_ELEMS, mode);
-    for (i = 0; i < N_ELEMS; i++) {
-        n_cmp = 0;
-        pheap_insert(&heap, &elements[i].hnode);
-        mov_avg_cma_update(&cma, n_cmp);
-        pheap_validate(&heap);
-    }
-
-    printf("Modify-key[%s]/init-state: ", mode2txt[mode]);
-    print_heap_size(&heap, &cma);
-    mov_avg_cma_init(&cma);
-    n_cmp = 0;
-
-    /* Increase one element to max possible value. */
-    elements[0].priority = UINT32_MAX;
-    pheap_reinsert(&heap, &elements[0].hnode);
-    mov_avg_cma_update(&cma, n_cmp);
-    pheap_validate(&heap);
-
-    printf("Modify-key[%s]/increase-0: ", mode2txt[mode]);
-    print_heap_size(&heap, &cma);
-    mov_avg_cma_init(&cma);
-    n_cmp = 0;
-
-    /* Decrease one element to min possible value. */
-    elements[N_ELEMS - 1].priority = 0;
-    pheap_reinsert(&heap, &elements[N_ELEMS - 1].hnode);
-    mov_avg_cma_update(&cma, n_cmp);
-    pheap_validate(&heap);
-
-    printf("Modify-key[%s]/decrease-N: ", mode2txt[mode]);
-    print_heap_size(&heap, &cma);
-    mov_avg_cma_init(&cma);
-    n_cmp = 0;
-
-    /* Decrease one element to min possible value. */
-    elements[N_ELEMS / 2].priority = 0;
-    pheap_reinsert(&heap, &elements[N_ELEMS / 2].hnode);
-    mov_avg_cma_update(&cma, n_cmp);
-    pheap_validate(&heap);
-
-    printf("Modify-key[%s]/decrease-Half: ", mode2txt[mode]);
-    print_heap_size(&heap, &cma);
-    mov_avg_cma_init(&cma);
-    n_cmp = 0;
-
-    /* Increase one element to min possible value. */
-    elements[N_ELEMS / 2].priority = UINT32_MAX;
-    pheap_reinsert(&heap, &elements[N_ELEMS / 2].hnode);
-    mov_avg_cma_update(&cma, n_cmp);
-    pheap_validate(&heap);
-
-    printf("Modify-key[%s]/increase-Half: ", mode2txt[mode]);
-    print_heap_size(&heap, &cma);
-    mov_avg_cma_init(&cma);
-    n_cmp = 0;
-
-    i = 0;
-    while ((top = pheap_pop(&heap)) != NULL) {
-        struct element *e = container_of(top, struct element, node);
-        pheap_validate(&heap);
-        prios[i++] = e->priority;
-    }
-    assert("Unexpected number of removal." && i == N_ELEMS);
-    assert("Heap unexpectedly non-empty." && pheap_is_empty(&heap));
-
-    for (i = 0; i < N_ELEMS - 1; i++) {
-        assert("Incorrect sorting of keys." && prios[i] <= prios[i + 1]);
-    }
-}
-
-#endif
-
 static void
 unit_heap_init(struct unit_heap_interface *uh)
 {
@@ -274,8 +179,8 @@ test_basic_insertion(struct unit_test *u)
         unit_heap_validate(u->uh);
     }
     if (verbose) {
-        printf("%u insertions[%s]: avg-n-cmp: %.2lf\n",
-               n, mode2txt[mode],
+        printf("insertions[%s]: avg-n-cmp: %.2lf\n",
+               mode2txt[mode],
                n_cmp ? (double) n / (double) n_cmp : 0);
     }
     n_cmp_reset();
@@ -293,8 +198,8 @@ test_basic_insertion(struct unit_test *u)
     }
 
     if (verbose) {
-        printf("%u removals[%s]: avg-n-cmp: %.2lf\n",
-               n, mode2txt[mode],
+        printf("removals[%s]: avg-n-cmp: %.2lf\n",
+               mode2txt[mode],
                n_cmp ? (double) n / (double) n_cmp : 0);
     }
 
@@ -311,9 +216,127 @@ test_insertion(struct unit_heap_interface *uh)
     u.params = (struct unit_params) params;
     u.uh = uh;
 
+    if (verbose) {
+        printf("Running insertion tests on %s with %u elements:\n",
+               uh->h->desc, u.params.n_elems);
+    }
+
     for (mode = INCREASING; mode < N_MODES; mode++) {
         u.params.mode = mode;
         test_basic_insertion(&u);
+    }
+}
+
+static void
+test_modify_key_(struct unit_test *u)
+{
+    struct heap_interface *h = u->uh->h;
+    struct unit_params *p = &u->params;
+    enum init_mode mode = p->mode;
+    unsigned int n = p->n_elems;
+    struct element *elements;
+    struct element *top;
+    uint32_t *prios;
+    size_t i;
+
+    unit_heap_init(u->uh);
+
+    elements = xcalloc(n, sizeof elements[0]);
+    prios = xcalloc(n, sizeof prios[0]);
+
+    n_cmp_reset();
+    elements_init(elements, n, mode);
+    for (i = 0; i < n; i++) {
+        h->insert(h->heap, &elements[i]);
+        unit_heap_validate(u->uh);
+    }
+    if (verbose) {
+        printf("Modify-key[%s]/insertions: avg-n-cmp: %.2lf\n",
+               mode2txt[mode],
+               n_cmp ? (double) n / (double) n_cmp : 0);
+    }
+
+    /* Increase one element to max possible value. */
+    n_cmp_reset();
+    h->update(h->heap, &elements[0], LLONG_MAX);
+    unit_heap_validate(u->uh);
+    if (verbose) {
+        printf("Modify-key[%s]/increase-0: avg-n-cmp: %.2lf\n",
+               mode2txt[mode],
+               n_cmp ? (double) n / (double) n_cmp : 0);
+    }
+
+    /* Decrease one element to min possible value. */
+    n_cmp_reset();
+    h->update(h->heap, &elements[n - 1], 0);
+    unit_heap_validate(u->uh);
+    if (verbose) {
+        printf("Modify-key[%s]/decrease-N: avg-n-cmp: %.2lf\n",
+               mode2txt[mode],
+               n_cmp ? (double) n / (double) n_cmp : 0);
+    }
+
+    /* Decrease one element to min possible value. */
+    n_cmp_reset();
+    h->update(h->heap, &elements[n / 2], 0);
+    unit_heap_validate(u->uh);
+    if (verbose) {
+        printf("Modify-key[%s]/decrease-half: avg-n-cmp: %.2lf\n",
+               mode2txt[mode],
+               n_cmp ? (double) n / (double) n_cmp : 0);
+    }
+
+    /* Increase one element to max possible value. */
+    n_cmp_reset();
+    h->update(h->heap, &elements[n / 2], LLONG_MAX);
+    unit_heap_validate(u->uh);
+    if (verbose) {
+        printf("Modify-key[%s]/increase-half: avg-n-cmp: %.2lf\n",
+               mode2txt[mode],
+               n_cmp ? (double) n / (double) n_cmp : 0);
+    }
+
+    n_cmp_reset();
+
+    i = 0;
+    while ((top = h->pop(h->heap)) != NULL) {
+        unit_heap_validate(u->uh);
+        prios[i++] = top->priority;
+    }
+
+    assert("Unexpected number of removal." && i == n);
+    assert("Heap unexpectedly non-empty." && h->is_empty(h->heap));
+    for (i = 0; i < n - 1; i++) {
+        assert("Incorrect sorting of keys." && prios[i] <= prios[i + 1]);
+    }
+
+    if (verbose) {
+        printf("Modify-key[%s]/removals: avg-n-cmp: %.2lf\n",
+               mode2txt[mode],
+               n_cmp ? (double) n / (double) n_cmp : 0);
+    }
+
+    free(elements);
+    free(prios);
+}
+
+static void
+test_modify_key(struct unit_heap_interface *uh)
+{
+    struct unit_test u = UNIT_INITIALIZER;
+    enum init_mode mode;
+
+    u.params = (struct unit_params) params;
+    u.uh = uh;
+
+    if (verbose) {
+        printf("Running key update tests on %s with %u elements:\n",
+               uh->h->desc, u.params.n_elems);
+    }
+
+    for (mode = INCREASING; mode < N_MODES; mode++) {
+        u.params.mode = mode;
+        test_modify_key_(&u);
     }
 }
 
@@ -334,6 +357,9 @@ int main(int argc, char *argv[])
 
     test_insertion(&unit_min_pairing_heap);
     test_insertion(&unit_min_binary_heap);
+
+    test_modify_key(&unit_min_pairing_heap);
+    test_modify_key(&unit_min_binary_heap);
 
     if (verbose) {
         printf("Test succeeded.\n");
