@@ -25,7 +25,7 @@ unit_OBJS += test/unit/pairing-heap.o
 unit_OBJS += test/unit/binary-heap.o
 
 unit: $(unit_OBJS)
-	$(CC) $(CFLAGS_ALL) -o $@ $^ $(LDFLAGS_ALL)
+	$(CC) $(CFLAGS_ALL) $(CFLAGS_SAN) -o $@ $^ $(LDFLAGS_ALL)
 
 bench_OBJS := test/bench/main.o $(util_OBJS)
 

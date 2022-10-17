@@ -216,9 +216,9 @@ tryflag CFLAGS_AUTO -Wno-pointer-to-int-cast
 fi
 
 if test "x$sanitize" != x ; then
-tryflag CFLAGS_AUTO -fsanitize=$sanitize
-tryflag CFLAGS_AUTO -fsanitize-trap=all
-echo "$CFLAGS_AUTO" | grep -q '\-fsanitize=*' || \
+tryflag CFLAGS_SAN -fsanitize=$sanitize
+tryflag CFLAGS_SAN -fsanitize-trap=all
+echo "$CFLAGS_SAN" | grep -q '\-fsanitize=*' || \
     printf "sanitizing requested but missing compiler support or dependencies (libasan?).\n"
 fi
 
@@ -243,6 +243,7 @@ INCLUDEDIR = $INCLUDEDIR
 CC = $CC
 CFLAGS = $CFLAGS
 CFLAGS_AUTO = $CFLAGS_AUTO
+CFLAGS_SAN = $CFLAGS_SAN
 LDFLAGS = $LDFLAGS
 LDFLAGS_AUTO = $LDFLAGS_AUTO
 CROSS_COMPILE = $CROSS_COMPILE
