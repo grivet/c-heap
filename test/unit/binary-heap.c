@@ -15,7 +15,7 @@ static inline int
 bheap_min_count_cmp(struct bheap_node *a, struct bheap_node *b)
 {
     n_cmp_inc();
-    return bheap_min_cmp(a, b);
+    return bheap_min_cmp_lli(a, b);
 }
 
 #define LEFT(i) (2 * i + 1)

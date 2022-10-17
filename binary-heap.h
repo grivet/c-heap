@@ -10,13 +10,16 @@
 
 struct bheap_node {
     void *data;
-    uint32_t priority;
+    union {
+        uint32_t u32;
+        long long int lli;
+    } priority;
 };
 
 static inline int
-bheap_min_cmp(struct bheap_node *a, struct bheap_node *b)
+bheap_min_cmp_u32(struct bheap_node *a, struct bheap_node *b)
 {
-    uint32_t pa = a->priority, pb = b->priority;
+    uint32_t pa = a->priority.u32, pb = b->priority.u32;
 
     return (pa < pb) ? -1 :
            (pa > pb) ? 1  :
@@ -24,9 +27,25 @@ bheap_min_cmp(struct bheap_node *a, struct bheap_node *b)
 }
 
 static inline int
-bheap_max_cmp(struct bheap_node *a, struct bheap_node *b)
+bheap_max_cmp_u32(struct bheap_node *a, struct bheap_node *b)
 {
-    return -bheap_min_cmp(a, b);
+    return -bheap_min_cmp_u32(a, b);
+}
+
+static inline int
+bheap_min_cmp_lli(struct bheap_node *a, struct bheap_node *b)
+{
+    long long int pa = a->priority.lli, pb = b->priority.lli;
+
+    return (pa < pb) ? -1 :
+           (pa > pb) ? 1  :
+           0;
+}
+
+static inline int
+bheap_max_cmp_lli(struct bheap_node *a, struct bheap_node *b)
+{
+    return -bheap_min_cmp_lli(a, b);
 }
 
 typedef int (*bheap_cmp)(struct bheap_node *a, struct bheap_node *b);
@@ -147,14 +166,13 @@ bheap_pop(struct bheap *h)
 }
 
 static inline void
-bheap_insert(struct bheap *h, void *entry, uint32_t priority)
+bheap_insert(struct bheap *h, struct bheap_node n)
 {
     if (!bheap_realloc(h, h->n + 1)) {
         return;
     }
 
-    h->entries[h->n].data = entry;
-    h->entries[h->n].priority = priority;
+    h->entries[h->n] = n;
     bheap_up(h, h->n);
     h->n += 1;
 }

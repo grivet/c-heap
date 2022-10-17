@@ -22,7 +22,12 @@ binary_heap_is_empty(void *aux)
 static void
 binary_heap_insert(void *aux, struct element *e)
 {
-    bheap_insert(aux, e, e->priority);
+    struct bheap_node n = {
+        .data = e,
+        .priority.lli = e->priority,
+    };
+
+    bheap_insert(aux, n);
 }
 
 static struct element *
@@ -41,7 +46,7 @@ static struct bheap heap;
 
 struct heap_interface min_binary_heap = {
     .heap = &heap,
-    .heap_cmp_fn = bheap_min_cmp,
+    .heap_cmp_fn = bheap_min_cmp_lli,
     .desc = "binary-heap",
     .init = binary_heap_init,
     .is_empty = binary_heap_is_empty,
@@ -53,7 +58,7 @@ struct heap_interface min_binary_heap = {
 
 struct heap_interface max_binary_heap = {
     .heap = &heap,
-    .heap_cmp_fn = bheap_max_cmp,
+    .heap_cmp_fn = bheap_max_cmp_lli,
     .desc = "binary-heap",
     .init = binary_heap_init,
     .is_empty = binary_heap_is_empty,
