@@ -6,6 +6,7 @@
 #define HEAP_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /*
  * This file describes a generic heap interface,
@@ -23,6 +24,7 @@ struct element {
                 long long int expiration;
                 long long int priority;
             };
+            bool inserted;
         };
         /* Take a whole cacheline per elements. */
         uint8_t pad[64];

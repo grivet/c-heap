@@ -160,6 +160,7 @@ test_execute(struct test *t)
     r->times.start = time_msec();
     for (i = 0; i < p->n_elems; i++) {
         h->insert(heap, &elems[i]);
+        elems[i].inserted = true;
     }
 
     r->times.insertion = time_msec();
@@ -174,14 +175,25 @@ test_execute(struct test *t)
             if (e == NULL) {
                 break;
             }
-            if (random_u32_range(100) <  p->p_update) {
+            /* Half of random updates happening on oldest element,
+             * other half within the heap at any point. */
+            if (random_u32_range(100) < (p->p_update / 2)) {
                 e->expiration += p->range;
                 h->insert(heap, e);
             } else {
                 while (e->expiration > clock_read()) {
                     clock_drift(delta);
                 }
+                e->inserted = false;
                 count++;
+            }
+        }
+        /* Re-assign the other half of the random update. */
+        for (i = 0; i < p->n_elems; i++) {
+            if (elems[i].inserted &&
+                random_u32_range(100) < (p->p_update / 2)) {
+                h->update(heap, &elems[i],
+                          elems[i].expiration + p->range);
             }
         }
         mov_avg_cma_update(&r->cma, time_msec() - sweep_start_ms);
