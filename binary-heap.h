@@ -44,11 +44,14 @@ struct bheap {
 }
 
 static inline void
-bheap_ptr_swap(struct bheap_node *a, struct bheap_node *b)
+bheap_swap(struct bheap *h, size_t i, size_t j)
 {
-    struct bheap_node tmp = *a;
-    *a = *b;
-    *b = tmp;
+    if (i != j) {
+        struct bheap_node tmp = h->entries[i];
+
+        h->entries[i] = h->entries[j];
+        h->entries[j] = tmp;
+    }
 }
 
 static inline bool
@@ -60,11 +63,11 @@ bheap_cmp_entries(struct bheap *h, size_t a, size_t b)
 static inline void
 bheap_up(struct bheap *h, size_t i)
 {
-    struct bheap_node *e = h->entries;
     size_t parent;
 
-    while ((parent = (i - 1) / 2), i > 0 && bheap_cmp_entries(h, i, parent)) {
-        bheap_ptr_swap(&e[i], &e[parent]);
+    while ((parent = (i - 1) / 2), i > 0 &&
+           bheap_cmp_entries(h, i, parent)) {
+        bheap_swap(h, i, parent);
         i = parent;
     }
 }
@@ -72,7 +75,6 @@ bheap_up(struct bheap *h, size_t i)
 static inline void
 bheap_down(struct bheap *h, size_t i, size_t size)
 {
-    struct bheap_node *e = h->entries;
     size_t next;
 
     while ((next = (2 * i + 1)), next < size) {
@@ -80,7 +82,7 @@ bheap_down(struct bheap *h, size_t i, size_t size)
         if (bheap_cmp_entries(h, i, next)) {
             break;
         }
-        bheap_ptr_swap(&e[i], &e[next]);
+        bheap_swap(h, i, next);
         i = next;
     }
 }
@@ -132,7 +134,7 @@ bheap_pop(struct bheap *h)
     }
 
     h->n -= 1;
-    bheap_ptr_swap(&h->entries[0], &h->entries[h->n]);
+    bheap_swap(h, 0, h->n);
     bheap_down(h, 0, h->n);
 
     if (h->n == 0) {
