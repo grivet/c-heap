@@ -57,13 +57,13 @@ typedef void (*heap_update_fn)(void *heap, struct element *e, long long int v);
 struct heap_interface {
     void *heap;
     void *heap_cmp_fn;
-    const char *desc;
     heap_init_fn init;
     heap_is_empty_fn is_empty;
     heap_insert_fn insert;
     heap_peek_fn peek;
     heap_pop_fn pop;
     heap_update_fn update;
+    const char *desc;
 };
 
 extern struct heap_interface min_pairing_heap;
