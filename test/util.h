@@ -72,6 +72,23 @@ shuffle_u32(uint32_t *p, size_t n)
     }
 }
 
+static inline void
+swap_lli(long long int *a, long long int *b)
+{
+    long long int tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
+static inline void
+shuffle_lli(long long int *p, size_t n)
+{
+    for (; n > 1; n--, p++) {
+        long long int *q = &p[random_u32_range(n)];
+        swap_lli(p, q);
+    }
+}
+
 void out_of_memory(void);
 void *xcalloc(size_t count, size_t size);
 void *xzalloc(size_t size);

@@ -99,7 +99,7 @@ clock_drift(long long int delta)
     }
 }
 
-#define NAME_LEN 15
+#define NAME_LEN 18
 
 static void
 test_column_print(void)
@@ -133,9 +133,8 @@ test_execute(struct test *t)
     struct test_results *r = &t->results;
     struct test_params *p = &t->params;
     long long int now = clock_read();
-    struct heap_interface *h = t->h;
+    struct heap *h = t->h;
     struct element *elems;
-    void *heap = h->heap;
     long long int delta;
     unsigned int limit;
     unsigned int i;
@@ -153,25 +152,25 @@ test_execute(struct test *t)
         elems[i].expiration = now + random_u32_range(p->range);
     }
 
-    h->init(heap, h->heap_cmp_fn);
+    heap_init(h);
 
     /* Test results are not using the fake internal time, but actual
      * monotonic clock. */
     r->times.start = time_msec();
     for (i = 0; i < p->n_elems; i++) {
-        h->insert(heap, &elems[i]);
+        heap_insert(h, &elems[i]);
         elems[i].inserted = true;
     }
 
     r->times.insertion = time_msec();
-    while (!h->is_empty(heap)) {
+    while (!heap_is_empty(h)) {
         long long int sweep_start_ms;
         unsigned int count = 0;
         struct element *e;
 
         sweep_start_ms = time_msec();
         while (count < limit) {
-            e = h->pop(heap);
+            e = heap_pop(h);
             if (e == NULL) {
                 break;
             }
@@ -179,12 +178,11 @@ test_execute(struct test *t)
              * other half within the heap at any point. */
             if (random_u32_range(100) < (p->p_update / 2)) {
                 e->expiration += p->range;
-                h->insert(heap, e);
+                heap_insert(h, e);
             } else {
                 while (e->expiration > clock_read()) {
                     clock_drift(delta);
                 }
-                e->inserted = false;
                 count++;
             }
         }
@@ -192,8 +190,8 @@ test_execute(struct test *t)
         for (i = 0; i < p->n_elems; i++) {
             if (elems[i].inserted &&
                 random_u32_range(100) < (p->p_update / 2)) {
-                h->update(heap, &elems[i],
-                          elems[i].expiration + p->range);
+                heap_update_key(h, &elems[i],
+                                elems[i].expiration + p->range);
             }
         }
         mov_avg_cma_update(&r->cma, time_msec() - sweep_start_ms);
@@ -205,7 +203,7 @@ test_execute(struct test *t)
 }
 
 void
-test_run(struct heap_interface *h)
+test_run(struct heap *h)
 {
     struct test t = TEST_INITIALIZER;
 

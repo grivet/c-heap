@@ -31,16 +31,33 @@ struct element {
     };
 };
 
-static inline int
-min_element_cmp(const void *_a, const void *_b)
-{
-    const struct element *e[2] = { _a, _b };
-    uint32_t a = e[0]->priority, b = e[1]->priority;
+extern unsigned int n_cmp;
 
+void n_cmp_inc(void);
+void n_cmp_enable(bool enabled);
+void n_cmp_reset(void);
+
+static inline int
+min_priority_cmp(long long int a, long long int b)
+{
+    n_cmp_inc();
     /* Compare without risk of underflow. */
     return (a < b) ? -1 :
            (a > b) ? 1 :
            0;
+}
+
+static inline int
+max_priority_cmp(long long int a, long long int b)
+{
+    return -min_priority_cmp(a, b);
+}
+
+static inline int
+min_element_cmp(const void *_a, const void *_b)
+{
+    const struct element *e[2] = { _a, _b };
+    return min_priority_cmp(e[0]->priority, e[1]->priority);
 }
 
 static inline int
@@ -55,23 +72,33 @@ typedef void (*heap_insert_fn)(void *heap, struct element *e);
 typedef struct element * (*heap_peek_fn)(void *heap);
 typedef struct element * (*heap_pop_fn)(void *heap);
 typedef void (*heap_update_fn)(void *heap, struct element *e, long long int v);
+typedef void (*heap_validate_fn)(void *heap);
 
-struct heap_interface {
+struct heap {
     void *heap;
-    void *heap_cmp_fn;
+    void *cmp;
     heap_init_fn init;
     heap_is_empty_fn is_empty;
     heap_insert_fn insert;
     heap_peek_fn peek;
     heap_pop_fn pop;
     heap_update_fn update;
+    heap_validate_fn validate;
     const char *desc;
 };
 
-extern struct heap_interface min_pairing_heap;
-extern struct heap_interface min_binary_heap;
+void heap_init(struct heap *h);
+bool heap_is_empty(struct heap *h);
+void heap_insert(struct heap *h, struct element *e);
+struct element *heap_peek(struct heap *h);
+struct element *heap_pop(struct heap *h);
+void heap_update_key(struct heap *h, struct element *e, long long int v);
+void heap_validate(struct heap *h);
 
-extern struct heap_interface max_pairing_heap;
-extern struct heap_interface max_binary_heap;
+extern struct heap min_pairing_heap;
+extern struct heap min_binary_heap;
+
+extern struct heap max_pairing_heap;
+extern struct heap max_binary_heap;
 
 #endif /* HEAP_H */

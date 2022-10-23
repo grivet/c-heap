@@ -17,38 +17,6 @@ struct bheap_node {
     bool invalid;
 };
 
-static inline int
-bheap_min_cmp_u32(struct bheap_node *a, struct bheap_node *b)
-{
-    uint32_t pa = a->priority.u32, pb = b->priority.u32;
-
-    return (pa < pb) ? -1 :
-           (pa > pb) ? 1  :
-           0;
-}
-
-static inline int
-bheap_max_cmp_u32(struct bheap_node *a, struct bheap_node *b)
-{
-    return -bheap_min_cmp_u32(a, b);
-}
-
-static inline int
-bheap_min_cmp_lli(struct bheap_node *a, struct bheap_node *b)
-{
-    long long int pa = a->priority.lli, pb = b->priority.lli;
-
-    return (pa < pb) ? -1 :
-           (pa > pb) ? 1  :
-           0;
-}
-
-static inline int
-bheap_max_cmp_lli(struct bheap_node *a, struct bheap_node *b)
-{
-    return -bheap_min_cmp_lli(a, b);
-}
-
 typedef int (*bheap_cmp)(struct bheap_node *a, struct bheap_node *b);
 
 struct bheap {

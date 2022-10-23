@@ -16,13 +16,11 @@ LDFLAGS_ALL = $(LDFLAGS_AUTO) $(LDFLAGS) -lm
 test/%.o: test/%.c Makefile config.mk
 	$(CC) $(CFLAGS_ALL) -c -o $@ $<
 
-util_OBJS := test/util.o
+util_OBJS := test/util.o test/heap.o
 util_OBJS += test/pairing-heap.o
 util_OBJS += test/binary-heap.o
 
 unit_OBJS := test/unit/main.o $(util_OBJS)
-unit_OBJS += test/unit/pairing-heap.o
-unit_OBJS += test/unit/binary-heap.o
 
 unit: $(unit_OBJS)
 	$(CC) $(CFLAGS_ALL) $(CFLAGS_SAN) -o $@ $^ $(LDFLAGS_ALL)

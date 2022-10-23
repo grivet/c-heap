@@ -47,7 +47,7 @@ struct test_results {
 struct test {
     struct test_params params;
     struct test_results results;
-    struct heap_interface *h;
+    struct heap *h;
 };
 
 #define TEST_INITIALIZER { \

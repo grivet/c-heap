@@ -37,29 +37,16 @@ struct unit_results {
     .n_cmp_cma = MOV_AVG_CMA_INITIALIZER, \
 }
 
-typedef void (*heap_validate_fn)(void *heap);
-
-struct unit_heap_interface {
-    struct heap_interface *h;
-    void *heap_counting_cmp;
-    heap_validate_fn validate;
-};
-
 struct unit_test {
     struct unit_params params;
     struct unit_results results;
-    struct unit_heap_interface *uh;
+    struct heap *h;
 };
 
 #define UNIT_INITIALIZER { \
     .params = UNIT_PARAMS_INITIALIZER, \
     .results = UNIT_RESULTS_INITIALIZER, \
-    .uh = NULL, \
+    .h = NULL, \
 }
-
-void n_cmp_inc();
-
-extern struct unit_heap_interface unit_min_pairing_heap;
-extern struct unit_heap_interface unit_min_binary_heap;
 
 #endif /* UNIT_H */
