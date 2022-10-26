@@ -19,6 +19,7 @@ test/%.o: test/%.c Makefile config.mk
 util_OBJS := test/util.o test/heap.o
 util_OBJS += test/pairing-heap.o
 util_OBJS += test/binary-heap.o
+util_OBJS += test/fibonacci-heap.o
 
 unit_OBJS := test/unit/main.o $(util_OBJS)
 

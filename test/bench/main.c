@@ -16,7 +16,7 @@
 
 static struct test_params params = {
     .name = NULL,
-    .n_elems = 1000000,
+    .n_elems = 100000,
     .range = 24 * 60 * 60 * 1000,
     .seed = 0,
     .p_update = 0,
@@ -236,6 +236,7 @@ int main(int argc, char * const argv[])
 
     test_column_print();
     test_run(&min_pairing_heap);
+    test_run(&min_fibonacci_heap);
     test_run(&min_binary_heap);
 
     return 0;

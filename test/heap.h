@@ -15,11 +15,15 @@
 
 /* Necessary for an intrusive type. */
 #include "pairing-heap.h"
+#include "fibonacci-heap.h"
 
 struct element {
     union {
         struct {
-            struct pheap_node hnode;
+            union {
+                struct pheap_node hnode;
+                struct fheap_node fnode;
+            };
             union {
                 long long int expiration;
                 long long int priority;
@@ -97,8 +101,10 @@ void heap_validate(struct heap *h);
 
 extern struct heap min_pairing_heap;
 extern struct heap min_binary_heap;
+extern struct heap min_fibonacci_heap;
 
 extern struct heap max_pairing_heap;
 extern struct heap max_binary_heap;
+extern struct heap max_fibonacci_heap;
 
 #endif /* HEAP_H */

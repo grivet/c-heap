@@ -325,6 +325,9 @@ int main(int argc, char *argv[])
     test_insertion(&min_binary_heap);
     test_modify_key(&min_binary_heap);
 
+    test_insertion(&min_fibonacci_heap);
+    test_modify_key(&min_fibonacci_heap);
+
     if (verbose) {
         printf("Test succeeded.\n");
     }
