@@ -127,6 +127,20 @@ static char *mode2txt[] = {
     [N_MODES] = "<invalid>",
 };
 
+static inline int
+none_priority_cmp(long long int a, long long int b)
+{
+    (void) a, b;
+    return 0;
+}
+
+enum sort_type { EQ, LT, GT };
+int (*cmps[])(long long int, long long int) = {
+    [EQ] = none_priority_cmp,
+    [LT] = min_priority_cmp,
+    [GT] = max_priority_cmp,
+};
+
 static void
 test_basic_insertion(struct unit_test *u)
 {
@@ -134,6 +148,7 @@ test_basic_insertion(struct unit_test *u)
     enum init_mode mode = p->mode;
     unsigned int n = p->n_elems;
     struct element *elements;
+    enum sort_type st = EQ;
     struct heap *h = u->h;
     struct element *top;
     long long int *prios;
@@ -164,13 +179,24 @@ test_basic_insertion(struct unit_test *u)
 
     assert("Unexpected number of removal." && i == n);
     assert("Heap unexpectedly non-empty." && heap_is_empty(h));
-    for (i = 0; i < n - 1; i++) {
-        assert("Incorrect sorting of keys." && prios[i] <= prios[i + 1]);
-    }
 
     if (verbose) {
         printf("%s removals[%s]: n-cmp: %u\n",
                h->desc, mode2txt[mode], n_cmp);
+    }
+
+    for (i = 0; i < n - 1; i++) {
+        long long int a = prios[i], b = prios[i + 1];
+        /* Learn the expected sorting from the first deletion(s).
+         * Enforce that it is always the same once 'learned'. */
+        if (st == EQ) {
+            switch (cmps[LT](a, b)) {
+            case -1: st = LT; break;
+            case 1: st = GT; break;
+            }
+        } else {
+            assert("Inconsistent sorting of keys." && cmps[st](a, b) <= 0);
+        }
     }
 
     free(elements);
@@ -204,6 +230,7 @@ test_modify_key_(struct unit_test *u)
     enum init_mode mode = p->mode;
     unsigned int n = p->n_elems;
     struct element *elements;
+    enum sort_type st = EQ;
     struct heap *h = u->h;
     struct element *top;
     long long int *prios;
@@ -271,13 +298,24 @@ test_modify_key_(struct unit_test *u)
 
     assert("Unexpected number of removal." && i == n);
     assert("Heap unexpectedly non-empty." && heap_is_empty(h));
-    for (i = 0; i < n - 1; i++) {
-        assert("Incorrect sorting of keys." && prios[i] <= prios[i + 1]);
-    }
 
     if (verbose) {
         printf("Modify-key[%s]/removals: n-cmp: %u\n",
                mode2txt[mode], n_cmp);
+    }
+
+    for (i = 0; i < n - 1; i++) {
+        long long int a = prios[i], b = prios[i + 1];
+        /* Learn the expected sorting from the first deletion(s).
+         * Enforce that it is always the same once 'learned'. */
+        if (st == EQ) {
+            switch (cmps[LT](a, b)) {
+            case -1: st = LT; break;
+            case 1: st = GT; break;
+            }
+        } else {
+            assert("Inconsistent sorting of keys." && cmps[st](a, b) <= 0);
+        }
     }
 
     free(elements);
@@ -322,11 +360,20 @@ int main(int argc, char *argv[])
     test_insertion(&min_pairing_heap);
     test_modify_key(&min_pairing_heap);
 
+    test_insertion(&max_pairing_heap);
+    test_modify_key(&max_pairing_heap);
+
     test_insertion(&min_binary_heap);
     test_modify_key(&min_binary_heap);
 
+    test_insertion(&max_binary_heap);
+    test_modify_key(&max_binary_heap);
+
     test_insertion(&min_fibonacci_heap);
     test_modify_key(&min_fibonacci_heap);
+
+    test_insertion(&max_fibonacci_heap);
+    test_modify_key(&max_fibonacci_heap);
 
     if (verbose) {
         printf("Test succeeded.\n");

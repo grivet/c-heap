@@ -133,5 +133,5 @@ struct heap max_pairing_heap = {
     .pop = pairing_heap_pop,
     .update = pairing_heap_update,
     .validate = pairing_heap_validate,
-    .desc = "min-pairing-heap",
+    .desc = "max-pairing-heap",
 };
