@@ -9,18 +9,21 @@
 #include <stdlib.h>
 
 struct pheap_node {
-    struct pheap_node *prev;
+    union {
+        struct pheap_node *parent;
+        struct pheap_node *prev;
+    };
     struct pheap_node *next;
-    struct pheap_node *left_child;
+    struct pheap_node *child;
 };
 
 #define PHEAP_NODE_INITIALIZER { \
     .prev = NULL, .next = NULL, \
-    .left_child = NULL, \
+    .child = NULL, \
 }
 
 #define PHEAP_NODE_FOREACH_CHILD(i, n) \
-    for (i = (n)->left_child; i != NULL; i = (i)->next)
+    for (i = (n)->child; i != NULL; i = (i)->next)
 
 typedef int (*pheap_cmp)(struct pheap_node *a, struct pheap_node *b);
 
@@ -44,14 +47,15 @@ pheap_node_init(struct pheap_node *n)
 static inline void
 pheap_node_add_child(struct pheap_node *head, struct pheap_node *n)
 {
-    struct pheap_node *child = head->left_child;
+    struct pheap_node *child = head->child;
 
-    n->prev = head;
+    n->parent = head;
     n->next = child;
     if (child != NULL) {
+        child->parent = NULL;
         child->prev = n;
     }
-    head->left_child = n;
+    head->child = n;
 }
 
 static inline struct pheap_node *
@@ -77,12 +81,13 @@ pheap_node_merge(struct pheap_node *a, struct pheap_node *b, pheap_cmp cmp)
 static inline void
 pheap_node_unlink(struct pheap_node *n)
 {
-    if (n == n->prev->left_child) {
-        struct pheap_node *parent = n->prev;
+    if (n == n->parent->child) {
+        struct pheap_node *parent = n->parent;
 
-        parent->left_child = n->next;
+        parent->child = n->next;
         if (n->next != NULL) {
-            n->next->prev = parent;
+            n->next->prev = NULL;
+            n->next->parent = parent;
         }
     } else {
         if (n->prev != NULL) {
@@ -156,7 +161,7 @@ pheap_pop(struct pheap *h)
     struct pheap_node *top = pheap_peek(h);
 
     if (top != NULL) {
-        h->root = pheap_node_pairwise_merge(top->left_child, h->cmp);
+        h->root = pheap_node_pairwise_merge(top->child, h->cmp);
         pheap_node_init(top);
     }
     return top;
@@ -194,8 +199,8 @@ pheap_reinsert(struct pheap *h, struct pheap_node *n)
         struct pheap_node *child;
 
         pheap_node_unlink(n);
-        child = pheap_node_pairwise_merge(n->left_child, h->cmp);
-        n->left_child = NULL;
+        child = pheap_node_pairwise_merge(n->child, h->cmp);
+        n->child = NULL;
         new_heap.root = pheap_node_merge(n, child, h->cmp);
     }
 
