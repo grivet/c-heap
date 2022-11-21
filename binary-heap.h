@@ -167,7 +167,8 @@ bheap_update_key(struct bheap *h, struct bheap_node new_key)
     void *data = new_key.data;
 
     for (size_t i = 0; i < h->n; i++) {
-        if (h->entries[i].data == data) {
+        if (h->entries[i].data == data &&
+            h->entries[i].invalid == false) {
             h->entries[i].invalid = true;
             break;
         }
