@@ -10,16 +10,19 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <time.h>
 
 #ifndef offsetof
 #define offsetof(type, field) \
     ((size_t)((char *)&(((type *)0)->field) - (char *)0))
-#endif
-
 /* Annotate any function using 'container_of' with this macro */
 #define ALLOW_UNDEFINED_BEHAVIOR \
     __attribute__((no_sanitize("undefined")))
+#else
+#define ALLOW_UNDEFINED_BEHAVIOR
+#endif
+
 #define container_of(addr, type, field) \
     ((type *) (void *) ((char *) (addr) - offsetof (type, field)))
 
