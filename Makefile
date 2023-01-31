@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright 2022 Gaëtan Rivet
 
-include config.mk
+-include config.mk
 ifeq ($(CONFIGURED),)
 $(error Please run "./configure" before using make)
 endif
