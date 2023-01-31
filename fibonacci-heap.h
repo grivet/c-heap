@@ -9,6 +9,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Fibonacci heap.
+ *
+ * This heap has the best possible complexity bounds,
+ * but is not practical. It has the exact same requirements /
+ * usage as the pairing heap, but its node are larger and
+ * its operations slightly slower in absolute terms.
+ *
+ * This implementation is provided mostly for comparison
+ * and as a study.
+ *
+ * No allocation is made during any heap operations.
+ */
+
 struct fheap_node {
     /* Navigate the current heap level. */
     struct fheap_node *prev;
@@ -27,15 +40,6 @@ struct fheap_node {
     .rank = 0, .mark = false, \
 }
 
-#define FHEAP_NODE_FOREACH_PEER(node, start) \
-    for (struct fheap_node *__it = start, \
-                           *__next = __it ? __it->next : NULL; \
-         node = __it, __it != NULL; \
-         __it = __next, __next = __it ? __it->next : NULL)
-
-#define FHEAP_NODE_FOREACH_CHILD(node, parent) \
-    FHEAP_NODE_FOREACH_PEER (node, parent->child)
-
 typedef int (*fheap_cmp)(struct fheap_node *a, struct fheap_node *b);
 
 struct fheap {
@@ -47,6 +51,27 @@ struct fheap {
     .root = NULL, .cmp = CMP, \
 }
 
+/* Fibonacci heap API. */
+
+static inline void fheap_init(struct fheap *h, fheap_cmp cmp);
+static inline bool fheap_is_empty(struct fheap *h);
+static inline struct fheap_node *fheap_peek(struct fheap *h);
+static inline struct fheap_node *fheap_pop(struct fheap *h);
+static inline void fheap_insert(struct fheap *h, struct fheap_node *node);
+static inline void fheap_merge(struct fheap *dst, struct fheap *src);
+static inline void fheap_update_key(struct fheap *h, struct fheap_node *n);
+
+/* Fibonacci-heap node utility functions. */
+
+#define FHEAP_NODE_FOREACH_PEER(node, start) \
+    for (struct fheap_node *__it = start, \
+                           *__next = __it ? __it->next : NULL; \
+         node = __it, __it != NULL; \
+         __it = __next, __next = __it ? __it->next : NULL)
+
+#define FHEAP_NODE_FOREACH_CHILD(node, parent) \
+    FHEAP_NODE_FOREACH_PEER (node, parent->child)
+
 static inline bool
 fheap_prop(struct fheap *h, struct fheap_node *a, struct fheap_node *b)
 {
@@ -54,8 +79,6 @@ fheap_prop(struct fheap *h, struct fheap_node *a, struct fheap_node *b)
      * meaning that 'a' could be parent of 'b'. */
     return (h->cmp(a, b) <= 0);
 }
-
-/* Fibonacci-heap node utility functions. */
 
 static inline void
 fheap_node_init(struct fheap_node *n)
