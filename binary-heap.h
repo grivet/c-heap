@@ -8,6 +8,30 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+/* Binary heap.
+ *
+ * This heap is implemented as a contiguous array of small containers,
+ * each pointing to arbitrary data and keeping a priority value
+ * within, for fast local access.
+ *
+ * The backing structure is a growing array, which is reallocated
+ * as necessary during insertion. This array is freed once
+ * all elements have been removed from the heap.
+ *
+ * Updating keys is implemented by 'burning' elements of the array,
+ * with an internal flag marking such dead entries. A new element
+ * with the same data and an updated priority is then inserted.
+ *
+ * To update a key, provide a new 'bheap_node' with its data
+ * pointer being properly set and its 'priority' field set to
+ * the new value. The data will be searched in the heap and
+ * if it exists within, its precedent container will be flagged.
+ *
+ * Heap operations will regularly allocate memory and all elements
+ * must be removed to avoid leaks, by repeatedly using 'pop' until
+ * 'is_empty' becomes true.
+ */
+
 struct bheap_node {
     void *data;
     union {
@@ -30,6 +54,18 @@ struct bheap {
     .cmp = CMP, .entries = NULL, \
     .capacity = 0, .n = 0, \
 }
+
+/* Binary heap interface. */
+
+static inline void bheap_init(struct bheap *h, bheap_cmp cmp);
+static inline bool bheap_is_empty(struct bheap *h);
+static inline void *bheap_peek(struct bheap *h);
+static inline void *bheap_pop(struct bheap *h);
+static inline void bheap_insert(struct bheap *h, struct bheap_node n);
+static inline void bheap_update_key(struct bheap *h, struct bheap_node new_key);
+
+/* Utility functions, used to implement
+ * the above operations. Do not call directly. */
 
 static inline void
 bheap_swap(struct bheap *h, size_t i, size_t j)
