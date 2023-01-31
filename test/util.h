@@ -24,7 +24,7 @@
 #endif
 
 #define container_of(addr, type, field) \
-    ((type *) (void *) ((char *) (addr) - offsetof (type, field)))
+    ((type *) ((char *) (1 ? (addr) : &((type*)0)->field) - offsetof(type, field)))
 
 #define ARRAY_SIZE(ar) (sizeof(ar) / sizeof(ar[0]))
 

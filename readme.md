@@ -123,7 +123,7 @@ struct entry {
 };
 
 #define container_of(addr, type, field) \
-    ((type *) (void *) ((char *) (addr) - offsetof (type, field)))
+	((type *) ((char *) (1 ? (addr) : &((type*)0)->field) - offsetof(type, field)))
 static int
 entry_cmp(struct pheap_node *a, struct pheap_node *b)
 {
