@@ -142,6 +142,19 @@ int (*cmps[])(long long int, long long int) = {
 };
 
 static void
+print_n_cmp(const char *heap_desc,
+            const char *step_desc,
+            enum init_mode mode)
+{
+    if (verbose) {
+        printf("%s %s[%s]: n-cmp: %.0e\n",
+                heap_desc, step_desc, mode2txt[mode],
+                (double) n_cmp);
+        n_cmp_reset();
+    }
+}
+
+static void
 test_basic_insertion(struct unit_test *u)
 {
     struct unit_params *p = &u->params;
@@ -165,11 +178,7 @@ test_basic_insertion(struct unit_test *u)
         heap_insert(h, &elements[i]);
         heap_validate(h);
     }
-    if (verbose) {
-        printf("%s insertions[%s]: n-cmp: %u\n",
-               h->desc, mode2txt[mode], n_cmp);
-    }
-    n_cmp_reset();
+    print_n_cmp(h->desc, "insertions", mode);
 
     i = 0;
     while ((top = heap_pop(h)) != NULL) {
@@ -180,10 +189,7 @@ test_basic_insertion(struct unit_test *u)
     assert("Unexpected number of removal." && i == n);
     assert("Heap unexpectedly non-empty." && heap_is_empty(h));
 
-    if (verbose) {
-        printf("%s removals[%s]: n-cmp: %u\n",
-               h->desc, mode2txt[mode], n_cmp);
-    }
+    print_n_cmp(h->desc, "removals", mode);
 
     for (i = 0; i < n - 1; i++) {
         long long int a = prios[i], b = prios[i + 1];
@@ -213,8 +219,8 @@ test_insertion(struct heap *h)
     u.h = h;
 
     if (verbose) {
-        printf("Running insertion tests on %s with %u elements:\n",
-               h->desc, u.params.n_elems);
+        printf("Running insertion tests on %s with %.0e elements:\n",
+               h->desc, (double) u.params.n_elems);
     }
 
     for (mode = INCREASING; mode < N_MODES; mode++) {
@@ -247,48 +253,27 @@ test_modify_key_(struct unit_test *u)
         heap_insert(h, &elements[i]);
         heap_validate(h);
     }
-    if (verbose) {
-        printf("Modify-key[%s]/insertions: n-cmp: %u\n",
-               mode2txt[mode], n_cmp);
-    }
+    print_n_cmp(h->desc, "insertions", mode);
 
     /* Increase one element to max possible value. */
-    n_cmp_reset();
     heap_update_key(h, &elements[0], LLONG_MAX);
     heap_validate(h);
-    if (verbose) {
-        printf("Modify-key[%s]/increase-0: n-cmp: %u\n",
-               mode2txt[mode], n_cmp);
-    }
+    print_n_cmp(h->desc, "increase-0", mode);
 
     /* Decrease one element to min possible value. */
-    n_cmp_reset();
     heap_update_key(h, &elements[n - 1], 0);
     heap_validate(h);
-    if (verbose) {
-        printf("Modify-key[%s]/decrease-N: n-cmp: %u\n",
-               mode2txt[mode], n_cmp);
-    }
+    print_n_cmp(h->desc, "decrease-N", mode);
 
     /* Decrease one element to min possible value. */
-    n_cmp_reset();
     heap_update_key(h, &elements[n / 2], 0);
     heap_validate(h);
-    if (verbose) {
-        printf("Modify-key[%s]/decrease-half: n-cmp: %u\n",
-               mode2txt[mode], n_cmp);
-    }
+    print_n_cmp(h->desc, "decrease-half", mode);
 
     /* Increase one element to max possible value. */
-    n_cmp_reset();
     heap_update_key(h, &elements[n / 2], LLONG_MAX);
     heap_validate(h);
-    if (verbose) {
-        printf("Modify-key[%s]/increase-half: n-cmp: %u\n",
-               mode2txt[mode], n_cmp);
-    }
-
-    n_cmp_reset();
+    print_n_cmp(h->desc, "increase-half", mode);
 
     i = 0;
     while ((top = heap_pop(h)) != NULL) {
@@ -299,10 +284,7 @@ test_modify_key_(struct unit_test *u)
     assert("Unexpected number of removal." && i == n);
     assert("Heap unexpectedly non-empty." && heap_is_empty(h));
 
-    if (verbose) {
-        printf("Modify-key[%s]/removals: n-cmp: %u\n",
-               mode2txt[mode], n_cmp);
-    }
+    print_n_cmp(h->desc, "removals", mode);
 
     for (i = 0; i < n - 1; i++) {
         long long int a = prios[i], b = prios[i + 1];
@@ -332,8 +314,8 @@ test_modify_key(struct heap *h)
     u.h = h;
 
     if (verbose) {
-        printf("Running key update tests on %s with %u elements:\n",
-               h->desc, u.params.n_elems);
+        printf("Running key update tests on %s with %.0e elements:\n",
+               h->desc, (double) u.params.n_elems);
     }
 
     for (mode = INCREASING; mode < N_MODES; mode++) {
