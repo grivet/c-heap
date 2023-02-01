@@ -30,7 +30,7 @@ usage(const char *program_name, int error)
     fprintf(s, "Usage: %s [-hnrs]\n", program_name);
     fprintf(s, "\n");
     fprintf(s, "Run performance tests on heap operations using different implementations,\n");
-    fprintf(s, "agains the pairing heap reference.\n");
+    fprintf(s, "against the pairing heap reference.\n");
     fprintf(s, "\n");
     fprintf(s, "-n <uint>:   Number of elements to sift through [n=%u].\n", params.n_elems);
     fprintf(s, "-r <uint>:   Range of elements priorities [r=%u].\n", params.range);
