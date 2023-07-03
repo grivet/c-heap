@@ -10,17 +10,23 @@
 
 /* Pairing heap.
  *
- * This heap is similar to fibonacci heaps but simpler, smaller, and faster.
- * It can be used to implement priority queues of arbitrary order.
+ * This is an intrusive and iterative implementation of the pairing-heap
+ * data structure.
  *
- * This is an intrusive implementation, meaning that to insert an element
- * it must contain a 'pheap_node' which is the size of three pointers.
+ * To use it, the elements inserted into the heap must contain a
+ * 'struct pheap_node' field, that must not be modified outside of
+ * the pheap API once inserted.
  *
  * To avoid replicating data (and possibly creating synchronization issues),
  * comparison between two nodes is made by comparing their containing type,
  * which must be orderable.
  *
  * No memory is allocated during heap operations.
+ *
+ * Unlike many other pairing-heap implementations, the pairing is implemented
+ * iteratively instead of recursively. After many insertions, pairing is done
+ * on a possibly large list of nodes. Recursive implementation then usually
+ * stack-overflow on the next removal.
  */
 
 struct pheap_node {
@@ -76,18 +82,23 @@ static inline void pheap_insert(struct pheap *h, struct pheap_node *node);
  * is not done. */
 static inline void pheap_merge(struct pheap *dst, struct pheap *src);
 
-/* After modifying the value of a containing element, it must
- * be re-ordered in the heap. Use this function to re-insert it
- * at its proper place.
- * The key update can be done in either direction (increase or decrease).
+/* To update the priority of an element already within the heap,
+ *
+ *   1. Modify the priority value within the element itself.
+ *   2. Then call 'pheap_reinsert' on the element.
+ *
+ * This function will fix any potential heap invariant violation
+ * that was the result of the priority update in the element.
+ * Make sure that the element is part of the heap first before calling it.
+ *
+ * The priority update can be done in either direction (increase or decrease).
  *
  * Some optimizations could be done depending on the comparison function
- * and the change type, but this function is generic and will work
- * for both, albeit slightly slower in case of:
+ * and the change direction, but this function is generic and will work for
+ * both cases, albeit slightly slower in case of:
  *
  *  - increasing low priorities if this is a min-heap
  *  - decreasing high priorities if this is a max-heap
- *
  */
 static inline void pheap_reinsert(struct pheap *h, struct pheap_node *n);
 
