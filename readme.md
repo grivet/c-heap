@@ -34,62 +34,6 @@ within the `test` directory, to be used by unit and performance tests.
 This layer is very thin, although some additions were written to enforce
 heap invariants during tests.
 
-### Pairing heap
-
-The `pheap` and `pheap_node` types are defined, along with pairing heap operators:
-
-  * `pheap_init`
-  * `pheap_is_empty`
-  * `pheap_peek`
-  * `pheap_pop`
-  * `pheap_insert`
-  * `pheap_merge`
-  * `pheap_reinsert`
-
-To update an element key, update its priority within its container, then re-insert
-its `pheap_node` field. Only a node that was already within the heap should be
-reinserted.
-
-Ancillary functions such as `pheap_node_merge` and `pheap_node_pairwise_merge` are
-used to implement the above operators and should be avoided. Unlike many
-other public implementation, they are written in iterative form.
-
-### Binary heap
-
-A `bheap` and `bheap_node` types is defined, along with binary heap operators:
-
-  * `bheap_init`
-  * `bheap_is_empty`
-  * `bheap_peek`
-  * `bheap_pop`
-  * `bheap_insert`
-  * `bheap_update_key`
-
-Ancillary functions such as `bheap_down` and `bheap_up` used to 'bubble'
-elements down and up are exposed but should only be used by the above operators.
-
-This is a 'containing' structure, each elements holding a generic pointer to
-data as well as a priority value.
-
-### Fibonacci heap
-
-The `fheap` and `fheap_node` types are defined, along with fibonacci heap operators:
-
-  * `fheap_init`
-  * `fheap_is_empty`
-  * `fheap_peek`
-  * `fheap_pop`
-  * `fheap_insert`
-  * `fheap_merge`
-  * `fheap_update_key`
-
-Ancillary functions `fheap_reinsert`, `fheap_consolidate` and other node functions
-are exposed and should be avoided.
-
-Similarly to the pairing heap, a key update is done by reinserting a node. However,
-because the process was more complex than with the pairing heap, the actual `update_key`
-function is fully implemented and should be used directly.
-
 ## Tests
 
 Unit tests are done for insertion and key modification, but they involve all operators.
